@@ -30,11 +30,18 @@ jobs:
 
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
-        
-      - uses: azure/appservice-settings@v1
+      
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+      
+      - name: Add App Settings
+        uses: azure/appservice-settings@v1
         with:
           app-name: 'KikonoChatApp'
           app-settings-json: '${{ secrets.APP_SETTINGS }}'
+          mask-inputs: true
           
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3

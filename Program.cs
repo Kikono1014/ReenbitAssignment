@@ -26,7 +26,6 @@ builder.Services.AddSingleton(new SentimentAnalysisService(
     builder.Configuration["Azure:CognitiveServices:ApiKey"]!
 ));
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

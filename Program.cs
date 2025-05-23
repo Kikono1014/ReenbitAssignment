@@ -18,7 +18,7 @@ builder.Services.AddSignalR().AddAzureSignalR(options =>
 
 // connecting to azure sql database
 builder.Services.AddDbContext<ChatContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))); 
 
 // adding sentiment analysis service
 builder.Services.AddSingleton(new SentimentAnalysisService(

@@ -5,47 +5,53 @@ on:
     branches:
       - main
 
+env:
+  ConnectionStrings__DefaultConnection: ${{ secrets.AZURE_SQL_CONNECTION_STRING }}
+  Azure__SignalR__ConnectionString: ${{ secrets.AZURE_SIGNALR_CONNECTION_STRING }}
+  Azure__CognitiveServices__Endpoint: ${{ secrets.COGNITIVE_SERVICES_ENDPOINT }}
+  Azure__CognitiveServices__ApiKey: ${{ secrets.COGNITIVE_SERVICES_APIKEY }}
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      ConnectionStrings__DefaultConnection: ${{ secrets.AZURE_SQL_CONNECTION_STRING }}
-      Azure__SignalR__ConnectionString: ${{ secrets.AZURE_SIGNALR_CONNECTION_STRING }}
-      Azure__CognitiveServices__Endpoint: ${{ secrets.COGNITIVE_SERVICES_ENDPOINT}}
-      Azure__CognitiveServices__ApiKey: ${{ secrets.COGNITIVE_SERVICES_APIKEY}}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
+    - name: Log in to Azure using OIDC
+      uses: azure/login@v2
+      with:
+        allow-no-subscriptions: true
 
-      - name: Restore dependencies
-        run: dotnet restore
+    - name: Set Application Settings
+      uses: azure/appservice-settings@v1
+      with:
+        app-name: 'KikonoChatApp'
+        app-settings-json: |
+          [
+            { "name": "ConnectionStrings__DefaultConnection", "value": "${{ secrets.AZURE_SQL_CONNECTION_STRING }}", "slotSetting": false },
+            { "name": "Azure__SignalR__ConnectionString", "value": "${{ secrets.AZURE_SIGNALR_CONNECTION_STRING }}", "slotSetting": false },
+            { "name": "Azure__CognitiveServices__Endpoint", "value": "${{ secrets.COGNITIVE_SERVICES_ENDPOINT }}", "slotSetting": false },
+            { "name": "Azure__CognitiveServices__ApiKey", "value": "${{ secrets.COGNITIVE_SERVICES_APIKEY }}", "slotSetting": false }
+          ]
 
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Publish
-        run: dotnet publish --configuration Release --output ./publish
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          creds: '${{ secrets.AZURE_CREDENTIALS }}'
-      
-      - name: Add App Settings
-        uses: azure/appservice-settings@v1
-        with:
-          app-name: 'KikonoChatApp'
-          app-settings-json: '${{ secrets.APP_SETTINGS }}'
-          mask-inputs: true
-          
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'KikonoChatApp'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./publish
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Publish
+      run: dotnet publish --no-build --configuration Release --output ./publish
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'KikonoChatApp'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./publish

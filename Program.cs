@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllersWithViews();
 
 // connecting to azure signalR service via connection string
@@ -36,6 +38,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseDeveloperExceptionPage();
 app.UseRouting();
 
 app.UseAuthorization();
